@@ -1,0 +1,17 @@
+**
+!requirements.txt
+!vendor/
+!vendor/geoutils/
+!vendor/geoutils/**
+vendor/geoutils/**/.git
+!ease_volume/
+!ease_volume/*.py
+!static/
+!static/index.html
+!data/
+!data/demo_current.csv
+!data/demo_reference.csv
+!data/demo_boundary.geojson
+!data/demo_metadata.json
+!LICENSE
+!NOTICE

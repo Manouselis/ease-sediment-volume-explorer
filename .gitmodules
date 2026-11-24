@@ -1,0 +1,3 @@
+[submodule "vendor/geoutils"]
+	path = vendor/geoutils
+	url = https://github.com/GlacioHack/geoutils.git

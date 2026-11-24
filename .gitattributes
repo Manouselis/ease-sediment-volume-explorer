@@ -1,0 +1,6 @@
+# Normalize authored text while preserving provenance-file hashes on every OS.
+* text=auto eol=lf
+/data/** -text
+
+# Immutable downloaded snapshots retain their original formatting and bytes.
+/data/demo_rws_* -diff

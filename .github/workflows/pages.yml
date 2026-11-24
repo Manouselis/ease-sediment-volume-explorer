@@ -1,0 +1,86 @@
+name: Test and publish EASE Pages
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ease-pages-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      OPENBLAS_NUM_THREADS: '1'
+      OMP_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.10'
+          cache: pip
+      - name: Install application dependencies
+        run: python -m pip install -r requirements.txt
+      - name: Test the analysis engine
+        run: python -m pytest -q tests
+      - name: Build the allowlisted site
+        env:
+          EASE_API_ORIGIN: ${{ vars.EASE_API_ORIGIN }}
+        run: |
+          python scripts/bundle_plotly.py
+          PYTHONPATH=. python scripts/build_pages.py dist/preview/ease-sediment-volume-explorer --source "$GITHUB_SHA" --api-origin "$EASE_API_ORIGIN"
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - name: Verify the Pages build in Chromium
+        run: |
+          npm install --no-save --prefix "$RUNNER_TEMP/ease-browser" playwright@1.62.1
+          python -m http.server 8790 --bind 127.0.0.1 --directory dist/preview &
+          ease_preview_pid=$!
+          trap 'kill "$ease_preview_pid"' EXIT
+          curl --retry 5 --retry-connrefused -fsS http://127.0.0.1:8790/ease-sediment-volume-explorer/release.json
+          NODE_PATH="$RUNNER_TEMP/ease-browser/node_modules" node scripts/pages_smoke.cjs
+      - name: Upload Pages artifact
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v4
+        with:
+          path: dist/preview/ease-sediment-volume-explorer
+
+  deploy:
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    needs: build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy the tested artifact
+        id: deployment
+        uses: actions/deploy-pages@v4
+      - name: Confirm the live release commit
+        env:
+          PAGES_URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          for attempt in {1..12}; do
+            if curl --max-time 10 -fsS "${PAGES_URL%/}/release.json?commit=$GITHUB_SHA&attempt=$attempt" |
+              python -c 'import json, os, sys; sys.exit(json.load(sys.stdin)["source_commit"] != os.environ["GITHUB_SHA"])'; then
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1
