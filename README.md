@@ -1,5 +1,7 @@
 # EASE · Sediment volume explorer
 
+[![Pages build and deploy](https://github.com/Manouselis/ease-sediment-volume-explorer/actions/workflows/pages.yml/badge.svg)](https://github.com/Manouselis/ease-sediment-volume-explorer/actions/workflows/pages.yml)
+
 A working local English/Dutch prototype for comparing a measured waterbed with a declared reference. It accepts corrected XYZ, single-band GeoTIFF or a zipped 3D point shapefile, flags potential outliers, offers bounded linear TIN or experimental Ordinary Kriging surfaces, calculates separate volumes above/below the reference, and exports the calculation. Survey inspection also works without a reference or a volume calculation.
 
 **A design comparison is potential dredging volume. It does not identify sludge, its composition, or its actual underside.** The Sonoptix ECHO raw-to-bathymetry interface remains unverified.
