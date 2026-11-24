@@ -1,6 +1,6 @@
 # EASE web deployment
 
-GitHub `main` is the application source. The [GitHub Pages project](https://manouselis.github.io/ease-sediment-volume-explorer/) receives an allowlisted static build and two saved calculations from the public [Rijkswaterstaat dataset](https://data.overheid.nl/dataset/b4d3f42b-f9d3-421a-8840-75c71951e475) under CC0. Both use the same hypothetical −6.50 m NAP design and 1 m calculation grid. The 3D image is from the public TIN result at 26× vertical exaggeration. The repository root `release.json` records the tested GitHub commit.
+GitHub `main` is the application source. The [GitHub Pages project](https://manouselis.github.io/ease-sediment-volume-explorer/) receives an allowlisted static build and two saved calculations from the public [Rijkswaterstaat dataset](https://maps.rijkswaterstaat.nl/dataregister-publicatie/srv/api/records/1d23ce9d-a11a-4e56-9538-c6f4c8a0fb77) under CC0. Both use the same hypothetical −6.50 m NAP design and 1 m calculation grid. The 3D image is from the public TIN result at 26× vertical exaggeration. The repository root `release.json` records the tested GitHub commit.
 
 The public demo includes interactive plots and ZIP, CSV, TIFF and JSON exports. It uses saved results. The URL preserves the active surface method for sharing or refreshing. Changing survey files or configuration takes a running analysis server. The existing localhost launch uses its original settings and does not require a key.
 

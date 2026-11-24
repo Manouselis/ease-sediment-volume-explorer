@@ -9,7 +9,7 @@ between surveys.
 
 ## Source and provenance
 
-- Dataset: [Bathymetrie Nederland — binnenwateren 1 mtr — april 2025](https://data.overheid.nl/dataset/b4d3f42b-f9d3-421a-8840-75c71951e475).
+- Dataset: [Bathymetrie Nederland — binnenwateren 1 mtr — april 2025](https://maps.rijkswaterstaat.nl/dataregister-publicatie/srv/api/records/1d23ce9d-a11a-4e56-9538-c6f4c8a0fb77).
 - Publisher: Rijkswaterstaat / RWS Centrale Informatievoorziening (CIV).
 - [Primary ISO metadata record](https://maps.rijkswaterstaat.nl/dataregister-publicatie/srv/api/records/1d23ce9d-a11a-4e56-9538-c6f4c8a0fb77/formatters/xml).
 - License: [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/), stated in the primary metadata and Dutch government catalogue.

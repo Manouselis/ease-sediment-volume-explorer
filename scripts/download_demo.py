@@ -23,7 +23,7 @@ from urllib.request import Request, urlopen
 BASE = "https://geo.rijkswaterstaat.nl/services/ogc/gdr/bodemhoogte_1mtr_historie/ows"
 COVERAGE = "bodemhoogte_1mtr_historie__bodemhoogte_1mtr_202504"
 RECORD = "https://maps.rijkswaterstaat.nl/dataregister-publicatie/srv/api/records/1d23ce9d-a11a-4e56-9538-c6f4c8a0fb77"
-SOURCE_PAGE = "https://data.overheid.nl/dataset/b4d3f42b-f9d3-421a-8840-75c71951e475"
+SOURCE_PAGE = "https://maps.rijkswaterstaat.nl/dataregister-publicatie/srv/api/records/1d23ce9d-a11a-4e56-9538-c6f4c8a0fb77"
 DESIGN_Z = -6.5
 REQUEST_BOUNDS = [133875, 455250, 133935, 455450]
 

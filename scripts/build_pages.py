@@ -97,6 +97,12 @@ for (const [key, [value, unit, digits]] of Object.entries(stats)) {{
 }}
 """ + ("document.querySelector('#analysis-availability').textContent = 'Project users can connect to the analysis server from the explorer.';\n" if api_origin else ""))
     write_json(destination / "release.json", {"source_commit": source, "hosted_analysis_configured": bool(api_origin)})
+    build_page = (ROOT / "deploy/pages/build.html").read_text()
+    analysis_status = ("Project access key required to analyse surveys online." if api_origin
+                       else "Use the local application to analyse new surveys. The public demo is available here.")
+    (destination / "build.html").write_text(
+        build_page.replace("{{SOURCE_COMMIT}}", source).replace("{{ANALYSIS_STATUS}}", analysis_status)
+    )
     (destination / "README.md").write_text(
         "# EASE Sediment Volume Explorer\n\n"
         "Generated GitHub Pages assets and public Rijkswaterstaat demo results. "

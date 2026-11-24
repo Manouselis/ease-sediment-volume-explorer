@@ -33,10 +33,24 @@ const screenshot = (page, name) => page.screenshot({path:path.join(qa, name)});
       await page.locator('main').click({position:{x:5,y:5}});
       await screenshot(page,'desktop-home.png');
     }
+    const source = page.getByRole('link', {name:'Bathymetry source'});
+    assert.equal(new URL(await source.getAttribute('href')).hostname, 'maps.rijkswaterstaat.nl');
+    await page.getByRole('link', {name:'Build information'}).click();
+    await page.getByRole('heading', {name:'Build information',exact:true}).waitFor();
+    assert.match(await page.locator('main code').textContent(), /^[a-f0-9]{40}$/);
+    await page.goBack();
     await page.getByRole('link', {name:/try the public demo/i}).click();
     await page.waitForFunction(() => document.querySelector('#chart')?.data?.[0]?.type === 'surface');
     assert.equal(await page.locator('#metric-above').textContent(), '2,616.7');
     assert.equal(await page.locator('#analysis-form').isVisible(), false);
+    const align = await page.locator('#hosted-tools').evaluate(panel => ({
+      heading: panel.querySelector('h1').getBoundingClientRect().top,
+      label: panel.querySelector('label').getBoundingClientRect().top,
+      method: panel.querySelector('select').getBoundingClientRect(),
+      button: panel.querySelector('#open-public-demo').getBoundingClientRect()
+    }));
+    assert.ok(Math.abs(align.heading - align.label) <= 2, 'Panel columns align at the top');
+    assert.ok(Math.abs(align.method.bottom - align.button.bottom) <= 2, 'Desktop demo controls share a row');
     await page.evaluate(() => document.fonts.ready);
     await page.locator('#analysis-chart-card').screenshot({path:path.join(qa,'demo-bed-card.png')});
     await screenshot(page,'desktop-bed.png');

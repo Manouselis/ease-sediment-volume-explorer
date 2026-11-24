@@ -2,7 +2,7 @@
   "name": "RWS Amsterdam–Rhine Canal: measured bed and assumed design",
   "description": "A 60 × 200 m subset near Utrecht of the Dutch national 1 m bathymetry snapshot for April 2025. Current XYZ values are genuine multibeam-derived raster cell means. The flat reference is hypothetical.",
   "publisher": "Rijkswaterstaat / RWS Centrale Informatievoorziening (CIV)",
-  "source_url": "https://data.overheid.nl/dataset/b4d3f42b-f9d3-421a-8840-75c71951e475",
+  "source_url": "https://maps.rijkswaterstaat.nl/dataregister-publicatie/srv/api/records/1d23ce9d-a11a-4e56-9538-c6f4c8a0fb77",
   "license": "CC0-1.0",
   "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
   "crs": "EPSG:28992",
