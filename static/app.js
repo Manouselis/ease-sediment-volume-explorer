@@ -6,12 +6,14 @@
   let accessBusy = false;
   let hostedMessage = '';
   let currentRequest = 0;
+  const localEngine = 'http://127.0.0.1:8767';
   let backend;
+  let serverOrigin;
   if (hosting?.apiOrigin) {
     const parsed = new URL(hosting.apiOrigin);
     const loopback = ['localhost', '127.0.0.1'].includes(parsed.hostname);
     if (!parsed.username && !parsed.password && (parsed.protocol === 'https:' || (loopback && location.protocol === 'http:'))) {
-      backend = parsed.origin;
+      serverOrigin = parsed.origin;
     }
   }
   const mib = 1024 * 1024;
@@ -46,23 +48,35 @@
     hostedMessage = key;
     $('hosted-message').textContent = key ? t(key) : '';
   }
-  function apiFetch(path, options = {}, key = accessKey) {
+  function apiFetch(path, options = {}, key = accessKey, origin = backend) {
     if (!hosting) return fetch(path, options);
-    if (!backend || !key) throw new Error('Hosted access required');
-    return fetch(backend + path, {
-      ...options, headers: {...options.headers, Authorization: 'Bearer ' + key},
+    if (!origin || !key) throw new Error('Analysis access required');
+    const localOptions = origin === localEngine ? {targetAddressSpace:'loopback'} : {};
+    return fetch(origin + path, {
+      ...options, ...localOptions, headers: {...options.headers, Authorization: 'Bearer ' + key},
       credentials: 'omit', redirect: 'error'
     });
   }
+  function connectionCopy() {
+    const local = accessKey ? backend === localEngine : $('hosted-target').value === 'local';
+    const privacy = t(local ? 'hostLocalPrivacy' : 'hostPrivacy');
+    $('hosted-privacy').textContent = privacy;
+    $('run-privacy').textContent = privacy;
+    $('hosted-start').hidden = !local || Boolean(accessKey);
+  }
   function updateHosting() {
     if (!hosting) return;
-    $('runtime-badge').textContent = t('hostPublic');
-    $('runtime-footer').textContent = t('hostPublic');
-    const privacy = $('run-privacy');
-    if (privacy) privacy.textContent = t('hostPrivacy');
+    const mode = !accessKey ? 'hostPublic' : backend === localEngine ? 'hostLocal' : 'hostServer';
+    $('runtime-badge').textContent = t(mode);
+    $('runtime-footer').textContent = t(mode);
+    $('hosted-title').textContent = t(accessKey ? 'hostAnalysis' : 'hostPublic');
+    $('hosted-lead').textContent = t(accessKey ? 'hostConnectedHint' : 'hostDemoHint');
+    $('hosted-demo-controls').hidden = Boolean(accessKey);
+    connectionCopy();
     $('hosted-tools').hidden = false;
     document.querySelector('.intro').hidden = true;
-    $('hosted-access').hidden = !backend;
+    $('hosted-access').hidden = false;
+    $('hosted-target-field').hidden = Boolean(accessKey) || !serverOrigin;
     $('hosted-login').hidden = Boolean(accessKey);
     $('hosted-lock').hidden = !accessKey;
     document.querySelector('.setup-panel').hidden = !accessKey;
@@ -74,17 +88,22 @@
     if (accessBusy) return;
     const input = $('hosted-key');
     const candidate = input.value.trim();
-    if (!candidate) return;
+    const local = $('hosted-target').value === 'local';
+    const origin = local ? localEngine : serverOrigin;
+    const unavailable = local ? 'hostLocalOffline' : 'hostOffline';
+    if (!candidate || !origin) return;
     input.value = '';
     accessBusy = true;
     const button = event.currentTarget.querySelector('button');
     button.disabled = true;
-    hostStatus('hostChecking');
+    $('hosted-target').disabled = true;
+    hostStatus(local ? 'hostCheckingLocal' : 'hostChecking');
     try {
-      const response = await apiFetch('/api/access', {signal: AbortSignal.timeout(20000)}, candidate);
+      const response = await apiFetch('/api/access', {signal: AbortSignal.timeout(local ? 20000 : 120000)}, candidate, origin);
       if (response.status === 401) return hostStatus('errors.hosted_access');
-      if (!response.ok) return hostStatus('hostOffline');
+      if (!response.ok || (await response.json()).status !== 'ok') return hostStatus(unavailable);
       ++currentRequest;
+      backend = origin;
       accessKey = candidate;
       state.demo = null;
       resetResults(false);
@@ -92,16 +111,18 @@
       translate();
       $('load-demo').focus();
     } catch {
-      hostStatus('hostOffline');
+      hostStatus(unavailable);
     } finally {
       accessBusy = false;
       button.disabled = false;
+      $('hosted-target').disabled = false;
     }
   }
   function lockHosted() {
     if (state.busy) return;
     ++currentRequest;
     accessKey = '';
+    backend = undefined;
     state.files = {survey:null, reference:null, boundary:null};
     state.demo = null;
     $('analysis-form').reset();
@@ -115,7 +136,6 @@
   async function loadPublicDemo() {
     if (state.busy) return;
     if (accessKey) return lockHosted();
-    if (accessKey) return;
     const request = ++currentRequest;
     const method = $('hosted-method').value === 'kriging' ? 'kriging' : 'tin';
     const button = $('open-public-demo');
@@ -138,7 +158,7 @@
       const currentUrl = new URL(location.href);
       currentUrl.searchParams.set('demo', method);
       history.replaceState(null, '', currentUrl);
-      hostStatus(backend ? 'hostDemoReady' : 'hostDemoOnly');
+      hostStatus('hostDemoReady');
     } catch {
       if (request === currentRequest) hostStatus('hostDemoError');
     } finally {
@@ -166,7 +186,7 @@
         download.click();
         setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
       } catch {
-        hostStatus('hostOffline');
+        hostStatus(backend === localEngine ? 'hostLocalOffline' : 'hostOffline');
       }
     };
   }
@@ -361,7 +381,7 @@
       const defaultIds = {cell_size: 'cell-size', max_edge: 'max-edge', filter_mode: 'filter-mode', filter_k: 'filter-k', filter_floor: 'filter-floor', neighbors: 'neighbors'};
       for (const [key, id] of Object.entries(defaultIds)) if (data.defaults?.[key] !== undefined) $(id).value = data.defaults[key];
       updateReferenceForm(); renderDemo(); resetResults();
-    } catch { showError(hosting ? 'hostOffline' : 'networkError'); }
+    } catch { showError(hosting ? (backend === localEngine ? 'hostLocalOffline' : 'hostOffline') : 'networkError'); }
     finally { $('load-demo').disabled = false; $('load-demo').querySelector('span').textContent = t('demo'); }
   }
   function demoNote(data) {
@@ -464,7 +484,7 @@
       renderPreview();
       const preview = $('survey-preview');
       if (preview.getBoundingClientRect().top >= window.innerHeight) preview.scrollIntoView();
-    } catch {showError(hosting ? 'hostOffline' : 'networkError');}
+    } catch {showError(hosting ? (backend === localEngine ? 'hostLocalOffline' : 'hostOffline') : 'networkError');}
     finally {state.inspecting=false;setBusy(false);}
   }
 
@@ -647,7 +667,7 @@
       state.profileView = '3d';
       renderResults();
       if (data.profile && $('profile-result').getBoundingClientRect().top >= window.innerHeight) $('profile-result').scrollIntoView();
-    } catch { showError(hosting ? 'hostOffline' : 'networkError'); }
+    } catch { showError(hosting ? (backend === localEngine ? 'hostLocalOffline' : 'hostOffline') : 'networkError'); }
     finally { setBusy(false); }
   }
 
@@ -1063,15 +1083,19 @@
   }).observe($('chart'));
   if (window.ResizeObserver) new ResizeObserver(()=>{if(state.preview&&window.Plotly)Plotly.Plots.resize($('survey-preview-chart'));}).observe($('survey-preview-chart'));
   if (hosting) {
+    $('hosted-target').value = serverOrigin ? 'server' : 'local';
+    $('hosted-target').addEventListener('change', connectionCopy);
     $('open-public-demo').addEventListener('click', loadPublicDemo);
     $('hosted-method').addEventListener('change', () => { if (!accessKey) loadPublicDemo(); });
     $('hosted-login').addEventListener('submit', unlockHosted);
     $('hosted-lock').addEventListener('click', lockHosted);
-    hostStatus(backend ? 'hostDemoReady' : 'hostDemoOnly');
+    hostStatus('hostDemoReady');
   }
   translate();
   if (hosting) {
-    const demo = new URLSearchParams(location.search).get('demo');
+    const query = new URLSearchParams(location.search);
+    if (query.has('analysis')) $('hosted-access').open = true;
+    const demo = query.get('demo');
     if (demo === 'kriging') $('hosted-method').value = 'kriging';
     if (demo !== null) loadPublicDemo();
   }

@@ -21,15 +21,20 @@
   </header>
   <main class="page-shell">
     <section id="hosted-tools" class="hosted-tools" aria-labelledby="hosted-title" hidden>
-      <div><h1 id="hosted-title" data-i18n="hostPublic"></h1><p data-i18n="hostDemoHint"></p></div>
-      <div class="hosted-demo-controls">
+      <div><h1 id="hosted-title" data-i18n="hostPublic"></h1><p id="hosted-lead" data-i18n="hostDemoHint"></p></div>
+      <div id="hosted-demo-controls" class="hosted-demo-controls">
         <label for="hosted-method" data-i18n="surfaceMethod"></label>
         <select id="hosted-method"><option value="tin" data-i18n="tinMethod"></option><option value="kriging" data-i18n="krigingMethod"></option></select>
         <button type="button" class="button button-primary" id="open-public-demo" data-i18n="hostLoad"></button>
       </div>
       <details id="hosted-access" hidden>
         <summary data-i18n="hostLab"></summary>
-        <p data-i18n="hostPrivacy"></p>
+        <div id="hosted-target-field" class="field" hidden>
+          <label for="hosted-target" data-i18n="hostTarget"></label>
+          <select id="hosted-target"><option value="local" data-i18n="hostLocal"></option><option value="server" data-i18n="hostServer"></option></select>
+        </div>
+        <p id="hosted-privacy"></p>
+        <p id="hosted-start" hidden><span data-i18n="hostStart"></span> <code>./run.sh --pages</code> <span data-i18n="hostStartKey"></span></p>
         <form id="hosted-login">
           <label for="hosted-key" data-i18n="hostKey"></label>
           <input id="hosted-key" type="password" required autocomplete="off" spellcheck="false">

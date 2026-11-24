@@ -99,7 +99,7 @@ for (const [key, [value, unit, digits]] of Object.entries(stats)) {{
     write_json(destination / "release.json", {"source_commit": source, "hosted_analysis_configured": bool(api_origin)})
     build_page = (ROOT / "deploy/pages/build.html").read_text()
     analysis_status = ("Project access key required to analyse surveys online." if api_origin
-                       else "Use the local application to analyse new surveys. The public demo is available here.")
+                       else "Connect the local EASE engine to analyse your own survey.")
     (destination / "build.html").write_text(
         build_page.replace("{{SOURCE_COMMIT}}", source).replace("{{ANALYSIS_STATUS}}", analysis_status)
     )

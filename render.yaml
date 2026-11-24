@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: ease-sediment-volume-api
+    runtime: docker
+    plan: free
+    region: frankfurt
+    branch: main
+    dockerfilePath: ./deploy/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeployTrigger: checksPass
+    envVars:
+      - key: EASE_PAGES_ORIGIN
+        value: https://manouselis.github.io
+      - key: EASE_ACCESS_KEY_HASHES
+        sync: false

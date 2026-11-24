@@ -7,6 +7,7 @@ const {chromium} = require('playwright');
 
 const base = process.env.EASE_PAGES_URL || 'http://127.0.0.1:8790/ease-sediment-volume-explorer/';
 const protectedKey = process.env.EASE_BROWSER_TEST_KEY;
+const localEngineTest = process.env.EASE_BROWSER_TEST_LOCAL === '1';
 const qa = path.join(__dirname, '..', 'qa', 'pages');
 const profiles = path.join(__dirname, '..', 'data');
 const view = (page, name) => page.locator('[data-view="' + name + '"]');
@@ -38,6 +39,10 @@ const screenshot = (page, name) => page.screenshot({path:path.join(qa, name)});
     await page.getByRole('link', {name:'Build information'}).click();
     await page.getByRole('heading', {name:'Build information',exact:true}).waitFor();
     assert.match(await page.locator('main code').textContent(), /^[a-f0-9]{40}$/);
+    await page.goBack();
+    await page.getByRole('link', {name:'Analyse your own survey'}).click();
+    await page.locator('#hosted-key').waitFor();
+    assert.match(new URL(page.url()).search, /analysis=1/);
     await page.goBack();
     await page.getByRole('link', {name:/try the public demo/i}).click();
     await page.waitForFunction(() => document.querySelector('#chart')?.data?.[0]?.type === 'surface');
@@ -83,10 +88,22 @@ const screenshot = (page, name) => page.screenshot({path:path.join(qa, name)});
     await mobile.close();
 
     if (protectedKey) {
+      if (localEngineTest && new URL(base).protocol === 'https:') {
+        // Consent in this isolated QA browser context mirrors an operator allowing loopback.
+        const cdp = await context.newCDPSession(page);
+        const {targetInfo} = await cdp.send('Target.getTargetInfo');
+        await cdp.send('Browser.setPermission', {
+          origin:new URL(base).origin, browserContextId:targetInfo.browserContextId,
+          permission:{name:'loopback-network'}, setting:'granted'
+        });
+      }
       await page.locator('[data-language=en]').click();
       await page.locator('#hosted-method').selectOption('tin');
       await view(page,'bed').waitFor();
       await page.locator('#hosted-access summary').click();
+      if (localEngineTest && await page.locator('#hosted-target').isVisible()) {
+        await page.locator('#hosted-target').selectOption('local');
+      }
       await page.locator('#hosted-key').fill('bad-local-test-key');
       await page.locator('#hosted-login button').click();
       await page.getByRole('status').filter({hasText:/Access denied/}).waitFor();
@@ -110,15 +127,43 @@ const screenshot = (page, name) => page.screenshot({path:path.join(qa, name)});
       const file = await filePromise;
       const saved = JSON.parse(fs.readFileSync(await file.path(),'utf8'));
       assert.ok(Math.abs(saved.summary.positive_volume_m3 - 2616.673785) < 1e-5);
+
+      const rows = ['x,y,z'];
+      for (let x=0;x<=4;x++) for (let y=0;y<=4;y++) rows.push(`${x},${y},${1+x/10+y/100}`);
+      await page.locator('#survey-file').setInputFiles({
+        name:'synthetic-survey.csv', mimeType:'text/csv', buffer:Buffer.from(rows.join('\n'))
+      });
+      await page.locator('#reference-mode').selectOption('constant');
+      await page.locator('#reference-elevation').fill('0');
+      await page.locator('#reference-note').fill('Synthetic flat design');
+      await page.locator('#surface-method').selectOption('kriging');
+      await page.locator('#kriging-model').selectOption('gaussian');
+      await page.locator('#kriging-fit').selectOption('manual');
+      await page.locator('#kriging-range').fill('7');
+      await page.locator('#kriging-fields details summary').click();
+      await page.locator('#kriging-neighbors').fill('8');
+      await page.locator('#kriging-radius').fill('10');
+      await page.locator('#run-analysis').click();
+      await view(page,'uncertainty').waitFor();
+      await view(page,'uncertainty').click();
+      assert.match(await page.locator('#resolved-method').textContent(), /Gaussian.*7/);
+      const parametersDownload = page.waitForEvent('download');
+      await page.locator('#export-summary').click();
+      const parameters = JSON.parse(fs.readFileSync(await (await parametersDownload).path(),'utf8'));
+      assert.equal(parameters.provenance.configuration.kriging_range, 7);
+      assert.equal(parameters.provenance.configuration.kriging_neighbors, 8);
+      assert.equal(parameters.provenance.configuration.kriging_radius, 10);
+      assert.equal(parameters.summary.valid_area_m2, 16);
+      await screenshot(page,'connected-own-survey-kriging.png');
       await page.locator('#hosted-lock').click();
       await page.waitForFunction(() => document.querySelector('#analysis-form').parentElement.hidden);
       assert.equal(await page.locator('#survey-file').inputValue(),'');
-      assert.equal(await page.locator('#export-summary').getAttribute('href'),'demo/tin/summary.json');
+      await page.waitForFunction(() => document.querySelector('#export-summary').getAttribute('href') === 'demo/tin/summary.json');
       await page.route('**/api/access', route => route.abort());
       if (!(await page.locator('#hosted-access').getAttribute('open') !== null)) await page.locator('#hosted-access summary').click();
       await page.locator('#hosted-key').fill(protectedKey);
       await page.locator('#hosted-login button').click();
-      await page.getByRole('status').filter({hasText:/server is unavailable/}).waitFor();
+      await page.getByRole('status').filter({hasText:localEngineTest ? /local EASE engine could not be reached/ : /server is unavailable/}).waitFor();
     }
     assert.deepEqual(errors, []);
     console.log('Pages desktop, keyboard, mobile, language, chart, refresh and downloads passed' + (protectedKey ? ' with protected API checks' : ''));

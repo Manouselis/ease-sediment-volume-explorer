@@ -34,6 +34,8 @@ The browser assets, including Plotly, are local after setup. The app and include
 
 ![EASE application with the real Rijkswaterstaat example](docs/images/application.png)
 
+To use the published website with private surveys, run `./run.sh --pages` in your local checkout. Select **Analyse your own survey** on Pages and enter the temporary key printed in the terminal. Processing runs on your computer.
+
 ## First calculation
 
 1. Click **Load Dutch bathymetry**. This loads 12,000 genuine Rijkswaterstaat multibeam-derived bathymetry cells near Utrecht, in metres RD New/NAP.

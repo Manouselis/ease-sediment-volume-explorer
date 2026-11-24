@@ -2,7 +2,7 @@
 
 GitHub `main` is the application source. The [GitHub Pages project](https://manouselis.github.io/ease-sediment-volume-explorer/) receives an allowlisted static build and two saved calculations from the public [Rijkswaterstaat dataset](https://maps.rijkswaterstaat.nl/dataregister-publicatie/srv/api/records/1d23ce9d-a11a-4e56-9538-c6f4c8a0fb77) under CC0. Both use the same hypothetical −6.50 m NAP design and 1 m calculation grid. The 3D image is from the public TIN result at 26× vertical exaggeration. The repository root `release.json` records the tested GitHub commit.
 
-The public demo includes interactive plots and ZIP, CSV, TIFF and JSON exports. It uses saved results. The URL preserves the active surface method for sharing or refreshing. Changing survey files or configuration takes a running analysis server. The existing localhost launch uses its original settings and does not require a key.
+The public demo includes interactive plots and ZIP, CSV, TIFF and JSON exports. It uses saved results. The URL preserves the active surface method for sharing or refreshing. Changing survey files or configuration takes a connected EASE engine. The existing localhost launch uses its original settings and does not require a key.
 
 ## Build and preview
 
@@ -16,11 +16,15 @@ python3 -m http.server 8790 --bind 127.0.0.1 --directory dist/preview
 
 Open [the preview](http://127.0.0.1:8790/ease-sediment-volume-explorer/). Run `scripts/pages_smoke.cjs` with Node.js, Playwright and Chrome. Set `EASE_PAGES_URL` to check a different preview or the live site. The screenshot is distributed as WebP. The build publishes only the assembled client, public demo inputs and calculated demo exports.
 
+## Analyse your own survey from Pages
+
+Run `./run.sh --pages` from the EASE checkout after `./setup.sh`. This starts a separate loopback-only engine at port 8767 and prints a temporary key. In the [published explorer](https://manouselis.github.io/ease-sediment-volume-explorer/explore/?analysis=1), choose the local engine and enter the key. If Chrome asks, allow the EASE site to connect to your device. The same analysis form, file types and parameters are available. Files stay on your computer. Download results before stopping the engine. Restarting creates a new key and a fresh workspace.
+
 ## Protected analysis API
 
 The hosted container uses the same Python dependencies and calculation engine as localhost. It adds an exact browser origin allowlist, individual access keys, one admitted analysis or inspection at a time, a multipart size check, and an isolated results directory per job. Results require the originating key and expire after one hour or when the 12-result capacity is reached. Original uploads are removed after request processing. Host restarts can drop results sooner. Result bundles include derived survey points and should be handled as survey data.
 
-Deploy `deploy/Dockerfile` from GitHub `main` with build context at the checkout root and the pinned GeoUtils submodule initialized. CPU, ingress and memory must be verified on the actual host. Start with one worker and one instance, HTTPS, capped resource use, ephemeral storage, and no proxy body or header logs. Render’s Git integration can deploy **After CI Checks Pass** from GitHub, subject to provider authorization, plan limits and access. Use a deployment account and region approved for the project.
+Deploy `deploy/Dockerfile` from GitHub `main` with build context at the checkout root and the pinned GeoUtils submodule initialized. CPU, ingress and memory must be verified on the actual host. Start with one worker and one instance, HTTPS, capped resource use, ephemeral storage, and no proxy body or header logs. Render’s Git integration can deploy **After CI Checks Pass** from GitHub, subject to provider authorization, plan limits and access. Use a deployment account and region approved for the project. The [Render Blueprint](../render.yaml) stages the free service in Frankfurt and prompts for the access key hashes. Review the workspace's billing settings before deploying. The host needs live ingress and calculation verification before enabling uploads.
 
 Set these environment values on the host:
 

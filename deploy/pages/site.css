@@ -58,3 +58,6 @@ footer{background:#edf3ef;border-top:1px solid var(--line)}
 .release dt{font-weight:750}
 .release dd{margin:4px 0 18px;color:var(--muted);overflow-wrap:anywhere}
 .release dd:last-child{margin-bottom:0}
+
+.hero-analysis{display:inline-flex;align-items:center;gap:8px;margin:8px 0 0 13px;color:#d6eeea;font-size:14px;font-weight:700;text-underline-offset:3px}
+@media(max-width:560px){.hero-analysis{display:flex;width:fit-content;margin:14px 0 0}}
