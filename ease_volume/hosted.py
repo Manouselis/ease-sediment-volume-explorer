@@ -125,24 +125,3 @@ def from_environment():
         key_hashes=os.environ["EASE_ACCESS_KEY_HASHES"],
         runs=Path(os.environ.get("EASE_RUNS_DIR", "/tmp/ease-results")),
     )
-
-
-def run_local():
-    """Open a temporary, authenticated loopback API for the published explorer."""
-    import secrets
-    import tempfile
-
-    import uvicorn
-
-    key = secrets.token_urlsafe(32)
-    with tempfile.TemporaryDirectory(prefix="ease-pages-local-") as folder:
-        app = configure_hosted(server.app, origin="https://manouselis.github.io",
-                               key_hashes=hashlib.sha256(key.encode()).hexdigest(),
-                               runs=Path(folder))
-        print("Open https://manouselis.github.io/ease-sediment-volume-explorer/explore/?analysis=1", flush=True)
-        print("Analysis access key:", key, flush=True)
-        uvicorn.run(app, host="127.0.0.1", port=8767, workers=1, limit_concurrency=16, access_log=False)
-
-
-if __name__ == "__main__":
-    run_local()

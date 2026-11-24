@@ -1,21 +1,8 @@
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
-  const hosting = window.EASE_HOSTING;
-  let accessKey = '';
-  let accessBusy = false;
-  let hostedMessage = '';
-  let currentRequest = 0;
-  const localEngine = 'http://127.0.0.1:8767';
-  let backend;
-  let serverOrigin;
-  if (hosting?.apiOrigin) {
-    const parsed = new URL(hosting.apiOrigin);
-    const loopback = ['localhost', '127.0.0.1'].includes(parsed.hostname);
-    if (!parsed.username && !parsed.password && (parsed.protocol === 'https:' || (loopback && location.protocol === 'http:'))) {
-      serverOrigin = parsed.origin;
-    }
-  }
+  const browserFetch = window.EASE_BROWSER_FETCH;
+  const apiFetch = (path, options) => browserFetch ? browserFetch(path, options) : fetch(path, options);
   const mib = 1024 * 1024;
   const surveyLimitMB = 100;
   const otherLimitMB = 25;
@@ -44,141 +31,19 @@
     return node;
   };
 
-  function hostStatus(key) {
-    hostedMessage = key;
-    $('hosted-message').textContent = key ? t(key) : '';
-  }
-  function apiFetch(path, options = {}, key = accessKey, origin = backend) {
-    if (!hosting) return fetch(path, options);
-    if (!origin || !key) throw new Error('Analysis access required');
-    const localOptions = origin === localEngine ? {targetAddressSpace:'loopback'} : {};
-    return fetch(origin + path, {
-      ...options, ...localOptions, headers: {...options.headers, Authorization: 'Bearer ' + key},
-      credentials: 'omit', redirect: 'error'
-    });
-  }
-  function connectionCopy() {
-    const local = accessKey ? backend === localEngine : $('hosted-target').value === 'local';
-    const privacy = t(local ? 'hostLocalPrivacy' : 'hostPrivacy');
-    $('hosted-privacy').textContent = privacy;
-    $('run-privacy').textContent = privacy;
-    $('hosted-start').hidden = !local || Boolean(accessKey);
-  }
-  function updateHosting() {
-    if (!hosting) return;
-    const mode = !accessKey ? 'hostPublic' : backend === localEngine ? 'hostLocal' : 'hostServer';
-    $('runtime-badge').textContent = t(mode);
-    $('runtime-footer').textContent = t(mode);
-    $('hosted-title').textContent = t(accessKey ? 'hostAnalysis' : 'hostPublic');
-    $('hosted-lead').textContent = t(accessKey ? 'hostConnectedHint' : 'hostDemoHint');
-    $('hosted-demo-controls').hidden = Boolean(accessKey);
-    connectionCopy();
-    $('hosted-tools').hidden = false;
-    document.querySelector('.intro').hidden = true;
-    $('hosted-access').hidden = false;
-    $('hosted-target-field').hidden = Boolean(accessKey) || !serverOrigin;
-    $('hosted-login').hidden = Boolean(accessKey);
-    $('hosted-lock').hidden = !accessKey;
-    document.querySelector('.setup-panel').hidden = !accessKey;
-    document.querySelector('.app-layout').classList.toggle('hosted-public', !accessKey);
-    hostStatus(hostedMessage);
-  }
-  async function unlockHosted(event) {
-    event.preventDefault();
-    if (accessBusy) return;
-    const input = $('hosted-key');
-    const candidate = input.value.trim();
-    const local = $('hosted-target').value === 'local';
-    const origin = local ? localEngine : serverOrigin;
-    const unavailable = local ? 'hostLocalOffline' : 'hostOffline';
-    if (!candidate || !origin) return;
-    input.value = '';
-    accessBusy = true;
-    const button = event.currentTarget.querySelector('button');
-    button.disabled = true;
-    $('hosted-target').disabled = true;
-    hostStatus(local ? 'hostCheckingLocal' : 'hostChecking');
-    try {
-      const response = await apiFetch('/api/access', {signal: AbortSignal.timeout(local ? 20000 : 120000)}, candidate, origin);
-      if (response.status === 401) return hostStatus('errors.hosted_access');
-      if (!response.ok || (await response.json()).status !== 'ok') return hostStatus(unavailable);
-      ++currentRequest;
-      backend = origin;
-      accessKey = candidate;
-      state.demo = null;
-      resetResults(false);
-      hostStatus('hostUnlocked');
-      translate();
-      $('load-demo').focus();
-    } catch {
-      hostStatus(unavailable);
-    } finally {
-      accessBusy = false;
-      button.disabled = false;
-      $('hosted-target').disabled = false;
-    }
-  }
-  function lockHosted() {
-    if (state.busy) return;
-    ++currentRequest;
-    accessKey = '';
-    backend = undefined;
-    state.files = {survey:null, reference:null, boundary:null};
-    state.demo = null;
-    $('analysis-form').reset();
-    for (const role of ['survey','reference','boundary']) setFile(role, null);
-    clearError();
-    clearPreview();
-    resetResults(false);
-    updateHosting();
-    loadPublicDemo();
-  }
-  async function loadPublicDemo() {
-    if (state.busy) return;
-    if (accessKey) return lockHosted();
-    const request = ++currentRequest;
-    const method = $('hosted-method').value === 'kriging' ? 'kriging' : 'tin';
-    const button = $('open-public-demo');
-    button.disabled = true;
-    hostStatus('demoLoading');
-    try {
-      const response = await fetch('./demo/' + method + '/view.json', {cache:'no-cache'});
-      if (!response.ok) throw new Error('Demo assets unavailable');
-      const {result, metadata} = await response.json();
-      if (request !== currentRequest) return;
-      resetResults(false);
-      state.stale = false;
-      $('stale-note').hidden = true;
-      state.demo = metadata;
-      state.result = result;
-      state.resultNoteAuto = true;
-      state.view = method === 'kriging' ? 'uncertainty' : 'bed';
-      renderResults();
-      setBusy(false);
-      const currentUrl = new URL(location.href);
-      currentUrl.searchParams.set('demo', method);
-      history.replaceState(null, '', currentUrl);
-      hostStatus('hostDemoReady');
-    } catch {
-      if (request === currentRequest) hostStatus('hostDemoError');
-    } finally {
-      button.disabled = false;
-    }
-  }
   function setExport(node, url) {
-    const remote = typeof url === 'string' && /^\/api\/results\/[a-f0-9]{32}\/[\w.-]+$/.test(url);
-    const example = hosting && typeof url === 'string' && /^demo\/(tin|kriging)\/[\w.-]+$/.test(url);
-    node.hidden = !(remote || example);
+    const result = typeof url === 'string' && /^\/api\/results\/[a-f0-9]{32}\/[\w.-]+$/.test(url);
+    const example = browserFetch && typeof url === 'string' && /^demo\/(tin|kriging)\/[\w.-]+$/.test(url);
+    node.hidden = !(result || example);
     node.onclick = null;
     if (node.hidden) return;
-    node.href = remote && hosting ? backend + url : url;
-    if (!remote || !hosting) return;
+    node.href = result && browserFetch ? '#' : url;
+    if (!result || !browserFetch) return;
     node.onclick = async event => {
       event.preventDefault();
       try {
         const response = await apiFetch(url);
-        if (response.status === 404) return hostStatus('hostExpired');
-        if (!response.ok) return hostStatus('hostDownloadError');
+        if (!response.ok) return showError('browserDownloadError');
         const blobUrl = URL.createObjectURL(await response.blob());
         const download = el('a');
         download.href = blobUrl;
@@ -186,7 +51,7 @@
         download.click();
         setTimeout(() => URL.revokeObjectURL(blobUrl), 1000);
       } catch {
-        hostStatus(backend === localEngine ? 'hostLocalOffline' : 'hostOffline');
+        showError('browserDownloadError');
       }
     };
   }
@@ -199,7 +64,10 @@
     document.querySelectorAll('[data-i18n-aria]').forEach(node => node.setAttribute('aria-label', t(node.dataset.i18nAria)));
     document.querySelectorAll('[data-language]').forEach(node => node.setAttribute('aria-pressed', String(node.dataset.language === state.lang)));
     $('status-text').textContent = t(state.busy ? 'loadingStatus' : state.result ? 'resultsReady' : 'ready');
-    updateHosting();
+    if (browserFetch) {
+      for (const id of ['runtime-badge','runtime-footer']) $(id).textContent = t('browserMode');
+      $('run-privacy').textContent = t('browserRunHint');
+    }
     updateReferenceForm();
     updateSurfaceForm();
     refreshDemoNote();
@@ -352,16 +220,19 @@
     resetResults();
   }
 
-  async function loadDemo() {
-    if (state.busy) return;
+  async function loadDemo(savedMethod = null) {
+    if (state.busy || $('load-demo').disabled) return;
     clearError();
     clearPreview();
     $('load-demo').disabled = true;
     $('load-demo').querySelector('span').textContent = t('demoLoading');
     try {
-      const response = await apiFetch('/api/demo');
-      const data = await response.json();
+      const source = savedMethod ? fetch('./demo/' + savedMethod + '/view.json') : apiFetch('/api/demo');
+      const response = await source;
       if (!response.ok) throw new Error('demo');
+      const payload = await response.json();
+      if (savedMethod && state.files.survey) return;
+      const data = savedMethod ? payload.metadata : payload;
       state.demo = data;
       state.files.survey = null;
       $('survey-file').value = ''; $('survey-selection').hidden = true;
@@ -380,8 +251,18 @@
       state.demoNoteAuto = true;
       const defaultIds = {cell_size: 'cell-size', max_edge: 'max-edge', filter_mode: 'filter-mode', filter_k: 'filter-k', filter_floor: 'filter-floor', neighbors: 'neighbors'};
       for (const [key, id] of Object.entries(defaultIds)) if (data.defaults?.[key] !== undefined) $(id).value = data.defaults[key];
-      updateReferenceForm(); renderDemo(); resetResults();
-    } catch { showError(hosting ? (backend === localEngine ? 'hostLocalOffline' : 'hostOffline') : 'networkError'); }
+      if (savedMethod) $('surface-method').value = savedMethod;
+      updateReferenceForm(); updateSurfaceForm(); renderDemo(); resetResults();
+      if (savedMethod) {
+        state.result = payload.result;
+        state.resultNoteAuto = true;
+        state.stale = false;
+        $('stale-note').hidden = true;
+        state.view = savedMethod === 'kriging' ? 'uncertainty' : 'bed';
+        renderResults();
+        setBusy(false);
+      }
+    } catch { showError(browserFetch ? 'browserEngineError' : 'networkError'); }
     finally { $('load-demo').disabled = false; $('load-demo').querySelector('span').textContent = t('demo'); }
   }
   function demoNote(data) {
@@ -484,7 +365,7 @@
       renderPreview();
       const preview = $('survey-preview');
       if (preview.getBoundingClientRect().top >= window.innerHeight) preview.scrollIntoView();
-    } catch {showError(hosting ? (backend === localEngine ? 'hostLocalOffline' : 'hostOffline') : 'networkError');}
+    } catch {showError(browserFetch ? 'browserEngineError' : 'networkError');}
     finally {state.inspecting=false;setBusy(false);}
   }
 
@@ -667,7 +548,7 @@
       state.profileView = '3d';
       renderResults();
       if (data.profile && $('profile-result').getBoundingClientRect().top >= window.innerHeight) $('profile-result').scrollIntoView();
-    } catch { showError(hosting ? (backend === localEngine ? 'hostLocalOffline' : 'hostOffline') : 'networkError'); }
+    } catch { showError(browserFetch ? 'browserEngineError' : 'networkError'); }
     finally { setBusy(false); }
   }
 
@@ -675,8 +556,6 @@
     state.busy = busy;
     $('setup-fields').disabled = busy;
     $('run-analysis').disabled = busy;
-    $('hosted-lock').disabled = busy;
-    $('open-public-demo').disabled = busy;
     updateRunLabel();
     updateInspectLabel();
     $('processing-overlay').querySelector('strong').textContent=t(state.inspecting ? 'inspectRunning' : 'running');
@@ -1044,7 +923,7 @@
     renderDesignChart(state.result);
   }));
   $('remove-boundary').addEventListener('click', () => { $('boundary-file').value=''; setFile('boundary',null); });
-  $('load-demo').addEventListener('click',loadDemo);
+  $('load-demo').addEventListener('click',() => loadDemo());
   $('inspect-survey').addEventListener('click',inspectSurvey);
   document.querySelectorAll('[data-preview-view]').forEach(button => button.addEventListener('click', () => {
     state.previewView = button.dataset.previewView;
@@ -1082,21 +961,19 @@
     else Plotly.Plots.resize($('chart'));
   }).observe($('chart'));
   if (window.ResizeObserver) new ResizeObserver(()=>{if(state.preview&&window.Plotly)Plotly.Plots.resize($('survey-preview-chart'));}).observe($('survey-preview-chart'));
-  if (hosting) {
-    $('hosted-target').value = serverOrigin ? 'server' : 'local';
-    $('hosted-target').addEventListener('change', connectionCopy);
-    $('open-public-demo').addEventListener('click', loadPublicDemo);
-    $('hosted-method').addEventListener('change', () => { if (!accessKey) loadPublicDemo(); });
-    $('hosted-login').addEventListener('submit', unlockHosted);
-    $('hosted-lock').addEventListener('click', lockHosted);
-    hostStatus('hostDemoReady');
+  if (browserFetch) {
+    window.addEventListener('ease-browser-starting', () => {
+      $('processing-overlay').querySelector('strong').textContent = t('browserStarting');
+    });
+    window.addEventListener('ease-browser-ready', () => {
+      if (state.busy) {
+        $('processing-overlay').querySelector('strong').textContent = t(state.inspecting ? 'inspectRunning' : 'running');
+      }
+    });
   }
   translate();
-  if (hosting) {
-    const query = new URLSearchParams(location.search);
-    if (query.has('analysis')) $('hosted-access').open = true;
-    const demo = query.get('demo');
-    if (demo === 'kriging') $('hosted-method').value = 'kriging';
-    if (demo !== null) loadPublicDemo();
+  if (browserFetch) {
+    const demo = new URLSearchParams(location.search).get('demo');
+    if (demo !== null) loadDemo(demo === 'kriging' ? 'kriging' : 'tin');
   }
 })();

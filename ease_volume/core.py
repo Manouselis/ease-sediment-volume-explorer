@@ -10,6 +10,7 @@ import csv
 import hashlib
 import json
 import math
+import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -36,6 +37,7 @@ MAX_CELLS = 500_000
 MIB = 1024 * 1024
 MAX_SURVEY_MB = 100
 MAX_UPLOAD_MB = 25
+TIFF_COMPRESSION = "LZW" if sys.platform == "emscripten" else "DEFLATE"
 
 
 class AnalysisError(ValueError):
@@ -176,7 +178,14 @@ def load_points(path: Path, crs: str, z_convention: str = "elevation", vertical_
                 raise AnalysisError("raster_metadata", field="single_band")
             if raster.height * raster.width > MAX_CELLS:
                 raise AnalysisError("grid_too_large", limit=MAX_CELLS)
-            data = np.ma.masked_invalid(raster.data).squeeze()
+            try:
+                data = np.ma.masked_invalid(raster.data).reshape(raster.height, raster.width)
+            except rasterio.errors.RasterioIOError:
+                if sys.platform != "emscripten":
+                    raise
+                from .browser_raster import read_geotiff
+                raster = read_geotiff(path)
+                data = np.ma.masked_invalid(raster.data).reshape(raster.height, raster.width)
             rows, cols = np.where(~np.ma.getmaskarray(data))
             x, y = rasterio.transform.xy(raster.transform, rows, cols)
             xyz = np.column_stack((x, y, np.asarray(data)[rows, cols]))
@@ -702,7 +711,7 @@ def analyze(survey_path: Path, reference_path: Path | None, boundary_path: Path 
             writer.writerow([*point, int(flag), int(not flag or config.filter_mode != "exclude")])
     for name, raster in [("bed", bed_raster), ("reference", aligned_reference), ("difference", difference_raster)]:
         path = output_dir / f"{name}.tif"
-        raster.to_file(str(path), driver="GTiff", nodata=-9999.0, co_opts={"COMPRESS": "DEFLATE"})
+        raster.to_file(str(path), driver="GTiff", nodata=-9999.0, co_opts={"COMPRESS": TIFF_COMPRESSION})
         with rasterio.open(path, "r+") as dst:
             dst.update_tags(vertical_datum=config.vertical_datum, units="m", z_convention="elevation_positive_up" if name != "difference" else "current_minus_reference", reference_type=config.reference_type)
     if config.surface_method == "kriging":
@@ -712,7 +721,7 @@ def analyze(survey_path: Path, reference_path: Path | None, boundary_path: Path 
             for kind, values, units in [("variance", variance, "m2"), ("standard_error", np.sqrt(variance), "m")]:
                 raster = raster_from_values(values.reshape(height, width), transform, config.crs)
                 path = output_dir / f"{role}_kriging_{kind}.tif"
-                raster.to_file(str(path), driver="GTiff", nodata=-9999.0, co_opts={"COMPRESS": "DEFLATE"})
+                raster.to_file(str(path), driver="GTiff", nodata=-9999.0, co_opts={"COMPRESS": TIFF_COMPRESSION})
                 with rasterio.open(path, "r+") as dst:
                     dst.update_tags(units=units, quantity=f"point_prediction_{kind}", surface_method="ordinary_kriging",
                                     includes_excluded_predictions="true", height_reference=config.vertical_datum)

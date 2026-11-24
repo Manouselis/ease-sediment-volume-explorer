@@ -2,11 +2,11 @@
 
 [![Pages build and deploy](https://github.com/Manouselis/ease-sediment-volume-explorer/actions/workflows/pages.yml/badge.svg)](https://github.com/Manouselis/ease-sediment-volume-explorer/actions/workflows/pages.yml)
 
-A working local English/Dutch prototype for comparing a measured waterbed with a declared reference. It accepts corrected XYZ, single-band GeoTIFF or a zipped 3D point shapefile, flags potential outliers, offers bounded linear TIN or experimental Ordinary Kriging surfaces, calculates separate volumes above/below the reference, and exports the calculation. Survey inspection also works without a reference or a volume calculation.
+An English/Dutch prototype for comparing a measured waterbed with a declared reference. It accepts corrected XYZ, single-band GeoTIFF or a zipped 3D point shapefile, flags potential outliers, offers bounded linear TIN or experimental Ordinary Kriging surfaces, calculates separate volumes above/below the reference, and exports the calculation. Survey inspection also works without a reference or a volume calculation.
 
 **A design comparison is potential dredging volume. It does not identify sludge, its composition, or its actual underside.** The Sonoptix ECHO raw-to-bathymetry interface remains unverified.
 
-Explore the [public Rijkswaterstaat demo](https://manouselis.github.io/ease-sediment-volume-explorer/). See the [deployment guide](docs/DEPLOYMENT.md) for the protected analysis API, Pages builds and releases.
+Open the [web explorer](https://manouselis.github.io/ease-sediment-volume-explorer/explore/) to drop in a survey, choose a reference, and tune TIN or Kriging. The same interface is available locally. See the [deployment guide](docs/DEPLOYMENT.md) for browser builds, dependencies and releases.
 
 ## Start locally
 
@@ -33,8 +33,6 @@ git submodule update --init --recursive
 The browser assets, including Plotly, are local after setup. The app and included demo then work without an internet connection. The server binds to localhost. Uploaded inputs and results stay in `runs/` until you delete them; the localhost server has no accounts or automatic retention policy. Generated assets, environments, uploads and results are excluded from Git.
 
 ![EASE application with the real Rijkswaterstaat example](docs/images/application.png)
-
-To use the published website with private surveys, run `./run.sh --pages` in your local checkout. Select **Analyse your own survey** on Pages and enter the temporary key printed in the terminal. Processing runs on your computer.
 
 ## First calculation
 

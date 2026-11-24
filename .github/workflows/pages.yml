@@ -35,11 +35,9 @@ jobs:
       - name: Test the analysis engine
         run: python -m pytest -q tests
       - name: Build the allowlisted site
-        env:
-          EASE_API_ORIGIN: ${{ vars.EASE_API_ORIGIN }}
         run: |
           python scripts/bundle_plotly.py
-          PYTHONPATH=. python scripts/build_pages.py dist/preview/ease-sediment-volume-explorer --source "$GITHUB_SHA" --api-origin "$EASE_API_ORIGIN"
+          PYTHONPATH=. python scripts/build_pages.py dist/preview/ease-sediment-volume-explorer --source "$GITHUB_SHA"
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
@@ -48,13 +46,10 @@ jobs:
           npm install --no-save --prefix "$RUNNER_TEMP/ease-browser" playwright@1.62.1
           python -m http.server 8790 --bind 127.0.0.1 --directory dist/preview &
           ease_preview_pid=$!
-          ease_test_hashes="$(python -c 'import hashlib; print(",".join(hashlib.sha256(k).hexdigest() for k in (b"ease-local-test-key", b"ease-local-other-key")))')"
-          EASE_ACCESS_KEY_HASHES="$ease_test_hashes" EASE_PAGES_ORIGIN=http://127.0.0.1:8790 EASE_RUNS_DIR="$(mktemp -d)" python -m uvicorn ease_volume.hosted:from_environment --factory --host 127.0.0.1 --port 8767 --no-access-log &
-          ease_engine_pid=$!
-          trap 'kill "$ease_preview_pid" "$ease_engine_pid"' EXIT
+          trap 'kill "$ease_preview_pid"' EXIT
           curl --retry 5 --retry-connrefused -fsS http://127.0.0.1:8790/ease-sediment-volume-explorer/release.json
-          curl --retry 5 --retry-connrefused -fsS http://127.0.0.1:8767/api/health
-          NODE_PATH="$RUNNER_TEMP/ease-browser/node_modules" EASE_BROWSER_TEST_LOCAL=1 EASE_BROWSER_TEST_KEY=ease-local-test-key node scripts/pages_smoke.cjs
+          python scripts/make_browser_fixtures.py
+          NODE_PATH="$RUNNER_TEMP/ease-browser/node_modules" node scripts/pages_smoke.cjs
       - name: Upload Pages artifact
         if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
         uses: actions/upload-pages-artifact@v4

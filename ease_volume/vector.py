@@ -2,13 +2,13 @@
 from __future__ import annotations
 
 import stat
+import sys
 import tempfile
 import zipfile
 from pathlib import Path, PurePosixPath
 
 import geopandas as gpd
 import numpy as np
-import pyogrio
 from pyproj import CRS
 
 
@@ -46,12 +46,21 @@ def read_pointz_zip(path: Path, declared_crs: CRS, max_points: int) -> tuple[np.
                 for ext in (".shp", ".shx", ".dbf", ".prj", ".cpg"):
                     if stem + ext in names:
                         (Path(folder) / ("surface" + ext)).write_bytes(archive.read(names[stem + ext]))
-                info = pyogrio.read_info(target)
-                if not info["crs"] or not CRS(info["crs"]).equals(declared_crs):
+                if sys.platform == "emscripten":
+                    import fiona
+                    with fiona.open(target) as dataset:
+                        source_crs, features = dataset.crs_wkt, len(dataset)
+                    engine = "fiona"
+                else:
+                    import pyogrio
+                    info = pyogrio.read_info(target)
+                    source_crs, features = info["crs"], info["features"]
+                    engine = "pyogrio"
+                if not source_crs or not CRS(source_crs).equals(declared_crs):
                     raise VectorInputError("crs_mismatch")
-                if info["features"] > max_points:
+                if features > max_points:
                     raise VectorInputError("too_many_points", limit=max_points)
-                frame = gpd.read_file(target, engine="pyogrio")
+                frame = gpd.read_file(target, engine=engine, rows=max_points + 1)
                 if len(frame) > max_points:
                     raise VectorInputError("too_many_points", limit=max_points)
                 if (frame.empty or frame.geometry.isna().any() or frame.geometry.is_empty.any()
