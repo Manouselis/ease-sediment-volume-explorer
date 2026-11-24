@@ -1,0 +1,47 @@
+{
+  "type": "FeatureCollection",
+  "name": "RWS demonstration raster footprint",
+  "crs": {
+    "type": "name",
+    "properties": {
+      "name": "urn:ogc:def:crs:EPSG::28992"
+    }
+  },
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "role": "source_raster_footprint",
+        "crs": "EPSG:28992",
+        "note": "Pixel-edge rectangle; not a surveyed canal boundary or statutory design boundary."
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              133875.36480422987,
+              455250.2895506767
+            ],
+            [
+              133935.36480422987,
+              455250.2895506767
+            ],
+            [
+              133935.36480422987,
+              455450.2895506767
+            ],
+            [
+              133875.36480422987,
+              455450.2895506767
+            ],
+            [
+              133875.36480422987,
+              455250.2895506767
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}

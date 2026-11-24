@@ -1,0 +1,239 @@
+{
+  "summary": {
+    "surface_method": "kriging",
+    "geometric_area_m2": 11741.0,
+    "prediction_excluded_area_m2": 0,
+    "exclusion_areas_m2": {},
+    "positive_volume_m3": 2598.930731656686,
+    "negative_volume_m3": 812.663903790143,
+    "net_volume_m3": 1786.266827866543,
+    "positive_area_m2": 8453.936511165753,
+    "negative_area_m2": 3287.0634888342465,
+    "valid_area_m2": 11741.0,
+    "requested_area_m2": 12000.0,
+    "excluded_area_m2": 259.0,
+    "coverage_percent": 97.84166666666667,
+    "input_points": 12000,
+    "accepted_points": 12000,
+    "selected_points": 12000,
+    "outside_analysis_area_points": 0,
+    "withheld_height_correction_points": 0,
+    "flagged_points": 0,
+    "duplicate_points": 0,
+    "grid_cells": 12261,
+    "valid_cells": 12000,
+    "min_difference_m": -0.7266009396185167,
+    "max_difference_m": 1.125470917849622,
+    "mean_difference_m": 0.15213924093914855,
+    "cell_size_m": 1.0,
+    "reference_type": "design",
+    "reference_note": "Hypothetical flat design at -6.5 m NAP; not an official maintenance profile, earlier survey, or measured sludge underside.",
+    "crs": "EPSG:28992",
+    "vertical_datum": "NAP",
+    "filter_mode": "flag",
+    "lod95_m": null,
+    "detectable_positive_volume_m3": null,
+    "detectable_negative_volume_m3": null,
+    "source_kind": "raster_cell_centres"
+  },
+  "warnings": [
+    {
+      "code": "grid_approximation",
+      "params": {}
+    },
+    {
+      "code": "edge_limit",
+      "params": {
+        "max_edge": 2.5
+      }
+    },
+    {
+      "code": "design_not_sludge",
+      "params": {}
+    },
+    {
+      "code": "limited_coverage",
+      "params": {
+        "percent": 97.84
+      }
+    },
+    {
+      "code": "raster_source",
+      "params": {}
+    },
+    {
+      "code": "no_uncertainty",
+      "params": {}
+    },
+    {
+      "code": "kriging_experimental",
+      "params": {}
+    }
+  ],
+  "provenance": {
+    "application_version": "0.2.0",
+    "surface_generation": {
+      "bed": {
+        "method": "ordinary_kriging",
+        "library": "PyKrige",
+        "version": "1.7.3",
+        "fit": "auto",
+        "variogram_model": "spherical",
+        "partial_sill_m2": 0.06070446014950989,
+        "total_sill_m2": 0.10179686253640004,
+        "nugget_m2": 0.041092402386890145,
+        "range_m": 55.04398902752883,
+        "fit_points": 512,
+        "fit_seed": 42,
+        "fit_sample_sha256": "cdf7cc949d15781de2753e13fc4f1e6dede514c20aaa4ad00f9a9dde8c61ff97",
+        "neighbors": 16,
+        "radius_m": 20,
+        "exact_values": true,
+        "anisotropy": "isotropic",
+        "uncertainty_target": "point elevation of the modelled process, exact at observations; nugget is unresolved variation, not a separately calibrated sensor-noise filter",
+        "limits": {
+          "fit_points": 512,
+          "neighbors": 64,
+          "predictions": 20000
+        }
+      },
+      "reference": {
+        "method": "constant"
+      }
+    },
+    "algorithm": "kriging elevations; bounded observed triangle support; common-grid quadrature with clipped plan areas and area-centroid/interior samples for partial cells",
+    "survey": {
+      "filename": "demo_current.csv",
+      "sha256": "eea7681101ec2c714d0883911d345ac66942ff9f7face0b89ac3113891c352ba",
+      "source_kind": "raster_cell_centres",
+      "metadata": null
+    },
+    "reference": {
+      "assumed_constant_elevation_m": -6.5
+    },
+    "configuration": {
+      "crs": "EPSG:28992",
+      "vertical_datum": "NAP",
+      "units": "m",
+      "z_convention": "elevation",
+      "survey_nap_confirmed": false,
+      "reference_type": "design",
+      "reference_mode": "constant",
+      "design_profile": null,
+      "reference_elevation": -6.5,
+      "reference_crs": "EPSG:28992",
+      "reference_vertical_datum": "NAP",
+      "reference_units": "m",
+      "reference_z_convention": "elevation",
+      "reference_note": "Hypothetical flat design at -6.5 m NAP; not an official maintenance profile, earlier survey, or measured sludge underside.",
+      "cell_size": 1.0,
+      "max_edge": 2.5,
+      "surface_method": "kriging",
+      "kriging_model": "spherical",
+      "kriging_fit": "auto",
+      "kriging_nugget": 0.005,
+      "kriging_partial_sill": 0.2,
+      "kriging_range": 20,
+      "kriging_neighbors": 16,
+      "kriging_radius": 20,
+      "kriging_max_se": null,
+      "filter_mode": "flag",
+      "filter_k": 4.5,
+      "filter_floor": 0.25,
+      "neighbors": 16,
+      "sigma_current": null,
+      "sigma_reference": null,
+      "analysis_bounds": null
+    },
+    "source_metadata": {
+      "name": "RWS Amsterdam\u2013Rhine Canal: measured bed and assumed design",
+      "description": "A 60 \u00d7 200 m subset near Utrecht of the Dutch national 1 m bathymetry snapshot for April 2025. Current XYZ values are genuine multibeam-derived raster cell means. The flat reference is hypothetical.",
+      "publisher": "Rijkswaterstaat / RWS Centrale Informatievoorziening (CIV)",
+      "source_url": "https://data.overheid.nl/dataset/b4d3f42b-f9d3-421a-8840-75c71951e475",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "crs": "EPSG:28992",
+      "vertical_datum": "NAP height (EPSG:5709), metres, positive upwards",
+      "reference_elevation": -6.5,
+      "reference_type": "design",
+      "reference_status": "Hypothetical flat design at -6.5 m NAP; not an official maintenance profile, earlier survey, or measured sludge underside.",
+      "defaults": {
+        "cell_size": 1.0,
+        "max_edge": 2.5,
+        "filter_mode": "flag",
+        "mad_k": 4.5,
+        "mad_floor": 0.25,
+        "neighbors": 16
+      },
+      "metadata": {
+        "source_title": "Bathymetrie Nederland - binnenwateren 1 mtr. Nederland - april 2025",
+        "source_metadata_record": "https://maps.rijkswaterstaat.nl/dataregister-publicatie/srv/api/records/1d23ce9d-a11a-4e56-9538-c6f4c8a0fb77",
+        "coverage_id": "bodemhoogte_1mtr_historie__bodemhoogte_1mtr_202504",
+        "download_url": "https://geo.rijkswaterstaat.nl/services/ogc/gdr/bodemhoogte_1mtr_historie/ows?service=WCS&version=2.0.1&request=GetCoverage&coverageId=bodemhoogte_1mtr_historie__bodemhoogte_1mtr_202504&subset=X%28133875%2C133935%29&subset=Y%28455250%2C455450%29&format=text%2Fplain",
+        "describe_coverage_url": "https://geo.rijkswaterstaat.nl/services/ogc/gdr/bodemhoogte_1mtr_historie/ows?service=WCS&version=2.0.1&request=DescribeCoverage&coverageId=bodemhoogte_1mtr_historie__bodemhoogte_1mtr_202504",
+        "retrieved_at_utc": "2026-10-12T14:08:14.254740+00:00",
+        "snapshot_date": "2025-04-23",
+        "survey_date": null,
+        "survey_date_note": "April 2025 is the composite snapshot date; individual source sounding dates are not provided by this raster subset.",
+        "sensor_basis": "Official lineage states multibeam soundings; sensor model and per-cell survey details are not given.",
+        "lineage": "The national product aggregates measured bed heights from Rijkswaterstaat's Landelijk Opslagsysteem Lodingen. Each 1 square metre height is the mean of all measured points in that cell.",
+        "point_representation": "Raster pixel centres carrying measured cell means, not original individual soundings. No synthetic perturbations, invented sediment thickness, reprojection, or vertical transformation were applied.",
+        "requested_bounds_rd_m": [
+          133875,
+          455250,
+          133935,
+          455450
+        ],
+        "grid": {
+          "bounds_pixel_edges": [
+            133875.36480422987,
+            455250.2895506767,
+            133935.36480422987,
+            455450.2895506767
+          ],
+          "shape_rows_columns": [
+            200,
+            60
+          ],
+          "cell_size_m": [
+            1.0,
+            1.0
+          ],
+          "valid_cells": 12000,
+          "nodata_cells": 0,
+          "z_min_m": -7.36,
+          "z_max_m": -5.16
+        },
+        "footprint_area_m2": 12000.0,
+        "valid_source_cell_area_m2": 12000.0,
+        "horizontal_units": "metre",
+        "vertical_units": "metre",
+        "z_convention": "elevation_positive_up",
+        "uncertainty": "No per-cell sounding uncertainty is supplied. The 1 m spacing is not an accuracy claim.",
+        "limitations": [
+          "This demonstrates volume above an assumed design, not observed sludge thickness or accumulation.",
+          "The source has already undergone hydrographic processing and cell averaging; this demo does not validate raw sonar corrections or the ECHO reconstruction.",
+          "RWS marks these data as unsuitable for navigation.",
+          "A TIN through cell centres covers a slightly smaller area than the original pixel-edge footprint. Compare integrations only over the same accepted support and grid.",
+          "WCS range-type unit labels can be generic raster defaults; the official dataset metadata explicitly establishes metres NAP."
+        ],
+        "files_sha256": {
+          "demo_rws_wcs.txt": "baa78e1b63123ca27eddbe6d377696a75e760ee4efe74f1dff0089e57e52a8ab",
+          "demo_rws_metadata.xml": "b6aaf2b6c715346c7ba39146fd00de3d2b1ef96652ecbafab4cd239be8eeffad",
+          "demo_rws_coverage.xml": "5a476d2795065c86fc00f67102c51196c769a5be8fd1e70bf2d3574914741331",
+          "demo_current.csv": "eea7681101ec2c714d0883911d345ac66942ff9f7face0b89ac3113891c352ba",
+          "demo_reference.csv": "e5cb5271f830f01129429fb9fb37afa01edaefaa79e0af11f877f84bab8d026a",
+          "demo_boundary.geojson": "305c71a595d412419531bb17ae29ce6183a4a0df62634573f6b750db135e5800"
+        }
+      },
+      "source_kind": "raster_cell_centres"
+    },
+    "foundation": {
+      "repository": "https://github.com/GlacioHack/geoutils",
+      "commit": "fda51a598f81f8cdd5f96855ae59edb23738ac45"
+    },
+    "vertical_datum_status": "user_declared; no vertical transformation or independent verification",
+    "uncertainty_model": "optional independent unbiased Gaussian per-surface sigma; excludes correlation and systematic bias; not a volume confidence interval",
+    "kriging_uncertainty": "Point prediction variance conditional on fitted isotropic variogram and exact observations. Excludes variogram parameter uncertainty, unmodelled trends, datum bias and separately calibrated acquisition error. Not combined with user sigma or a volume confidence interval."
+  }
+}

@@ -1,0 +1,12 @@
+EASE Sediment Volume Explorer prototype
+Copyright 2026 EASE prototype contributors
+
+This application incorporates GeoUtils, developed by the GeoUtils contributors.
+Repository: https://github.com/GlacioHack/geoutils
+Pinned source commit: fda51a598f81f8cdd5f96855ae59edb23738ac45
+GeoUtils source, Apache-2.0 license and upstream NOTICE are retained in vendor/geoutils/.
+
+The locally bundled Plotly.js browser library retains its MIT license header
+and permission notice in static/plotly-LICENSE.txt.
+Rijkswaterstaat example data are CC0-1.0; source and conversion are documented
+in docs/REAL_DATA.md. Dependency packages retain their respective licenses.
