@@ -18,6 +18,34 @@ class VectorInputError(ValueError):
         super().__init__(code)
 
 
+def pointz_crs_matches(source: CRS, declared: CRS) -> bool:
+    if source.equals(declared):
+        return True
+    # Some Hydromagic WKT1 exports identify RD New but round its two
+    # origin angles to eight decimal places and its scale to six. GDAL
+    # may preserve that WKT instead of returning a canonical EPSG code.
+    if (declared.to_epsg() != 28992
+            or source.to_json_dict().get("id") != {"authority": "EPSG", "code": 28992}
+            or not source.is_projected
+            or not source.geodetic_crs.equals(declared.geodetic_crs, ignore_axis_order=True)
+            or [(axis.direction, axis.unit_conversion_factor) for axis in source.axis_info]
+            != [(axis.direction, axis.unit_conversion_factor) for axis in declared.axis_info]):
+        return False
+    operation, expected = source.coordinate_operation, declared.coordinate_operation
+    if operation.method_code != expected.method_code:
+        return False
+    params = {p.code: (p.value, p.unit_conversion_factor) for p in operation.params}
+    if params.keys() != {p.code for p in expected.params}:
+        return False
+    precision = {"8801": 8, "8802": 8, "8805": 6}
+    return all(
+        params[p.code][1] == p.unit_conversion_factor
+        and (params[p.code][0] == p.value
+             or (p.code in precision and params[p.code][0] == round(p.value, precision[p.code])))
+        for p in expected.params
+    )
+
+
 def read_pointz_zip(path: Path, declared_crs: CRS, max_points: int) -> tuple[np.ndarray, dict]:
     """Preserve embedded XYZ. A .prj establishes XY only, never the height datum."""
     try:
@@ -56,7 +84,7 @@ def read_pointz_zip(path: Path, declared_crs: CRS, max_points: int) -> tuple[np.
                     info = pyogrio.read_info(target)
                     source_crs, features = info["crs"], info["features"]
                     engine = "pyogrio"
-                if not source_crs or not CRS(source_crs).equals(declared_crs):
+                if not source_crs or not pointz_crs_matches(CRS(source_crs), declared_crs):
                     raise VectorInputError("crs_mismatch")
                 if features > max_points:
                     raise VectorInputError("too_many_points", limit=max_points)

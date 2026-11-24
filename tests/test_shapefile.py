@@ -11,10 +11,12 @@ import geopandas as gpd
 import numpy as np
 import pytest
 from fastapi.testclient import TestClient
+from pyproj import CRS
 from shapely.geometry import Point, LineString
 
 from ease_volume import server
 from ease_volume.core import AnalysisConfig, AnalysisError, analyze, inspect_survey, load_points
+from ease_volume.vector import pointz_crs_matches
 
 
 def package(tmp_path, xyz=None, *, geometry=None, crs="EPSG:28992", omit=(), nested=False):
@@ -83,6 +85,21 @@ def test_embedded_crs_must_match(tmp_path):
     p = package(tmp_path)
     with pytest.raises(AnalysisError, match="crs_mismatch"):
         load_points(p, "EPSG:32631")
+
+
+def test_rounded_hydromagic_rd_new_checks_projection_and_coordinates():
+    rd_new = CRS("EPSG:28992")
+    legacy = (rd_new.to_wkt(version="WKT1_GDAL")
+              .replace("52.1561605555556", "52.15616056")
+              .replace("5.38763888888889", "5.38763889")
+              .replace("0.9999079", "0.999908"))
+    assert not CRS(legacy).equals(rd_new)
+    assert pointz_crs_matches(CRS(legacy), rd_new)
+    assert not pointz_crs_matches(CRS(legacy), CRS("EPSG:32631"))
+    for wrong in (legacy.replace("155000", "155001"),
+                  legacy.replace("0.999908", "1.000001"),
+                  legacy.replace("6377397.155", "6377398.155")):
+        assert not pointz_crs_matches(CRS(wrong), rd_new)
 
 
 @pytest.mark.parametrize("kind", ["corrupt", "multiple", "traversal"])

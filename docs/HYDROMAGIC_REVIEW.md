@@ -13,6 +13,10 @@ Hydromagic 12.0 SND layout**. The field relationship was inferred from the
 provided matching files, rather than an authoritative general sounding-file
 specification. It is a diagnostic aid that needs provider confirmation.
 
+The browser also accepts RD New WKT1 projection sidecars that explicitly
+identify EPSG:28992 and use Hydromagic's rounded origin angles and scale.
+The importer verifies the other CRS parameters and preserves the recorded XY.
+
 The tool requires matching record counts and row-by-row XY correspondence. It
 then checks whether every exported Z matches the observed correction-minus-depth
 relationship, or a depth-like fallback when the correction equals the file's

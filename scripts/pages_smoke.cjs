@@ -15,9 +15,10 @@ const close = (a, b) => assert.ok(Math.abs(a - b) < 1e-6, `${a} differs from ${b
 async function finished(page, selector) {
   await page.waitForFunction(target => {
     const result = document.querySelector(target);
-    return !result.hidden || !document.querySelector('#form-error').hidden;
+    return !result.hidden || document.querySelector('.form-error:not([hidden])');
   }, selector, {timeout:120000});
-  assert.equal(await page.locator('#form-error').isVisible(), false, await page.locator('#form-error').textContent());
+  const error = page.locator('.form-error:not([hidden])');
+  assert.deepEqual(await error.allTextContents(), []);
 }
 async function save(page, selector) {
   const pending = page.waitForEvent('download');
@@ -143,6 +144,28 @@ async function summary(page) {
     await finished(page,'#survey-preview');
     assert.match(await page.locator('#survey-preview').textContent(), /Soundings excluded for missing corrections1/);
     assert.match(await page.locator('#survey-preview').textContent(), /4/);
+
+    await page.locator('#survey-file').setInputFiles(path.join(fixtures,'paired-rd-new.zip'));
+    await page.locator('#survey-sounding').setInputFiles(path.join(fixtures,'SNDG00001'));
+    await page.locator('#reference-mode').selectOption('profile');
+    await page.locator('#profile-water').fill('-5.7');
+    await page.locator('#crs').fill('EPSG:32631');
+    await page.locator('#inspect-survey').click();
+    await page.locator('#inspect-error').waitFor();
+    assert.match(await page.locator('#inspect-error').textContent(), /coordinate systems do not match/);
+    assert.equal(await page.locator('#form-error').isVisible(), false);
+    await page.locator('#crs').fill('EPSG:28992');
+    await page.locator('#inspect-survey').click();
+    await finished(page,'#survey-preview');
+    assert.match(await page.locator('#survey-preview').textContent(), /Soundings excluded for missing corrections1/);
+    assert.equal(await page.locator('#track-processing-note').isVisible(), true);
+    assert.equal(await page.locator('#surface-method').isVisible(), false);
+    await page.locator('#run-analysis').click();
+    await finished(page,'#profile-result');
+    assert.match(await page.locator('#profile-result').textContent(), /Compared soundings4/);
+    await page.locator('#profile-coverage').selectOption('area');
+    assert.equal(await page.locator('#surface-method').isVisible(), true);
+    await page.locator('#profile-coverage').selectOption('track');
     await page.locator('#survey-preprocess').uncheck();
 
     if (process.env.EASE_BROWSER_LARGE) {

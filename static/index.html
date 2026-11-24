@@ -41,6 +41,7 @@
               </div>
               <label class="profile-check" id="survey-nap-label" hidden><input id="survey-nap-confirmed" type="checkbox"><span data-i18n="profileNAPConfirmed"></span></label>
               <button type="button" id="inspect-survey" class="button button-demo inspect-button" data-i18n="inspectSurvey"></button><p class="field-hint" data-i18n="inspectHint"></p>
+              <div id="inspect-error" class="form-error" role="alert" hidden></div>
             </section>
             <section class="form-section"><h3><span class="step-number">02</span><span data-i18n="stepReference"></span></h3>
               <div class="field"><label for="reference-type" data-i18n="refType"></label><select id="reference-type"><option value="design" data-i18n="design"></option><option value="previous" data-i18n="previous"></option><option value="underside" data-i18n="underside"></option></select><p class="field-hint ref-interpretation" id="reference-type-hint"></p></div>
@@ -71,7 +72,8 @@
               <div class="field"><label for="reference-note" data-i18n="referenceNote"></label><textarea id="reference-note" rows="3" maxlength="1000" data-i18n-placeholder="referenceNotePlaceholder" required></textarea><p class="field-hint" id="reference-note-hint" data-i18n="referenceNoteHint"></p></div>
             </section>
             <fieldset class="fieldset-reset form-section" id="volume-settings"><h3><span class="step-number">03</span><span data-i18n="stepSettings"></span></h3>
-
+              <p class="field-hint" id="track-processing-note" data-i18n="trackProcessingNote" hidden></p>
+              <div id="volume-controls">
               <div class="field"><label for="surface-method" data-i18n="surfaceMethod"></label><select id="surface-method"><option value="tin" data-i18n="tinMethod"></option><option value="kriging" data-i18n="krigingMethod"></option></select><p class="field-hint" data-i18n="surfaceHint"></p></div>
               <div id="kriging-fields" hidden>
                 <div class="field"><label for="kriging-model" data-i18n="variogramModel"></label><select id="kriging-model"><option value="spherical" data-i18n="spherical"></option><option value="exponential" data-i18n="exponential"></option><option value="gaussian" data-i18n="gaussian"></option></select></div>
@@ -91,6 +93,7 @@
               <div class="field-row"><div class="field"><label for="cell-size" data-i18n="cellSize"></label><div class="unit-input"><input id="cell-size" type="number" value="1" min="0.05" max="1000" step="0.1"><span>m</span></div></div><div class="field"><label for="max-edge" data-i18n="maxEdge"></label><div class="unit-input"><input id="max-edge" type="number" value="3" min="0.05" max="10000" step="1"><span>m</span></div></div></div><p class="field-hint" data-i18n="gridHint"></p>
               <div class="field"><label for="filter-mode" data-i18n="filter"></label><select id="filter-mode"><option value="off" data-i18n="filterOff"></option><option value="flag" data-i18n="filterFlag" selected></option><option value="exclude" data-i18n="filterExclude"></option></select><p class="field-hint" data-i18n="filterHint"></p></div>
               <details class="advanced-settings"><summary data-i18n="advanced"></summary><div class="advanced-content"><div class="field-row"><div class="field"><label for="filter-k" data-i18n="filterK"></label><input id="filter-k" type="number" min="2" max="20" step="0.5" value="4.5"></div><div class="field"><label for="filter-floor" data-i18n="filterFloor"></label><div class="unit-input"><input id="filter-floor" type="number" min="0.001" max="100" step="0.05" value="0.25"><span>m</span></div></div></div><div class="field"><label for="neighbors" data-i18n="neighbors"></label><input id="neighbors" type="number" min="6" max="64" step="1" value="16"></div><div class="field"><label for="sigma-current" data-i18n="sigmaCurrent"></label><input id="sigma-current" type="number" min="0" max="100" step="0.01" data-i18n-placeholder="optional"></div><div class="field"><label for="sigma-reference" data-i18n="sigmaReference"></label><input id="sigma-reference" type="number" min="0" max="100" step="0.01" data-i18n-placeholder="optional"></div><p class="field-hint" data-i18n="uncertaintyHint"></p><div class="field"><label for="boundary-file" data-i18n="boundary"></label><div class="boundary-input"><input type="file" id="boundary-file" accept=".geojson,.json" class="file-input"><span id="boundary-name" data-i18n="boundaryUpload"></span></div><button id="remove-boundary" class="text-button" type="button" data-i18n="remove" hidden></button><p class="field-hint" data-i18n="boundaryHint"></p></div></div></details>
+              </div>
             </fieldset>
           </fieldset>
           <div class="run-block"><div id="form-error" class="form-error" role="alert" hidden></div><button type="submit" class="button button-primary" id="run-analysis"><span id="run-icon" aria-hidden="true">↗</span><span id="run-label" data-i18n="run"></span></button><p id="run-privacy" class="field-hint" data-i18n="runHint"></p></div>

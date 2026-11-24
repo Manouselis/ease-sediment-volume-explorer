@@ -101,7 +101,8 @@
     $('survey-nap-label').hidden = !(profile || preprocess) || (track && preprocess);
     $('reference-note').required = !profile;
     $('reference-note-hint').textContent = t(profile ? 'profileNoteHint' : 'referenceNoteHint');
-    $('volume-settings').hidden = $('volume-settings').disabled = profile && track;
+    $('volume-settings').disabled = $('volume-controls').hidden = track;
+    $('track-processing-note').hidden = !track;
     updateRunLabel();
     updateInspectLabel();
   }
@@ -144,15 +145,17 @@
     $('profile-export-bundle').removeAttribute('href');
   }
 
-  function showError(key, params = {}, api = false) {
-    state.error = {key, params, api};
+  function showError(key, params = {}, api = false, target = 'form-error') {
+    state.error = {key, params, api, target};
     renderError();
   }
   function renderError() {
-    const box = $('form-error');
-    box.hidden = !state.error;
-    box.replaceChildren();
+    for (const id of ['form-error', 'inspect-error']) {
+      $(id).hidden = state.error?.target !== id;
+      $(id).replaceChildren();
+    }
     if (!state.error) return;
+    const box = $(state.error.target);
     box.append(el('strong', t('errorTitle')));
     const message = state.error.api ? t('errors.' + state.error.key) : t(state.error.key);
     box.append(el('span', message.replace('{limit}', state.error.params.limit_mb ?? otherLimitMB)));
@@ -331,12 +334,12 @@
     if (window.Plotly) Plotly.purge($('survey-preview-chart'));
   }
 
-  function appendSurveyPreprocessing(form) {
+  function appendSurveyPreprocessing(form, errorTarget) {
     if (!$('survey-preprocess').checked) return true;
     const sounding = $('survey-sounding').files[0];
-    if (!sounding) { showError('preprocessSoundingRequired'); return false; }
+    if (!sounding) { showError('preprocessSoundingRequired', {}, false, errorTarget); return false; }
     if (sounding.size > otherLimitMB * mib) {
-      showError('file_too_large', {limit_mb:otherLimitMB}, true);
+      showError('file_too_large', {limit_mb:otherLimitMB}, true, errorTarget);
       return false;
     }
     form.append('sounding', sounding);
@@ -345,18 +348,19 @@
 
   async function inspectSurvey() {
     if (state.busy) return;
-    if (!state.files.survey) return showError('inspectFileRequired');
+    const errorTarget = 'inspect-error';
+    if (!state.files.survey) return showError('inspectFileRequired', {}, false, errorTarget);
     clearError();
     const form = new FormData();
     form.append('survey', state.files.survey);
     for (const [key,id] of [['crs','crs'],['vertical_datum','vertical-datum'],['z_convention','z-convention']]) form.append(key,$(id).value.trim());
-    if (!appendSurveyPreprocessing(form)) return;
+    if (!appendSurveyPreprocessing(form, errorTarget)) return;
     resetResults(false);
     state.inspecting = true; setBusy(true);
     try {
       const response = await apiFetch('/api/inspect',{method:'POST',body:form});
       const data = await response.json();
-      if (!response.ok) {showError(data.error?.code || 'processing_failed',data.error?.params || {},true);return;}
+      if (!response.ok) {showError(data.error?.code || 'processing_failed',data.error?.params || {},true,errorTarget);return;}
       state.preview = data; state.analysisBounds = null;
       state.previewView = '3d';
       state.previewCameraRevision += 1;
@@ -365,7 +369,7 @@
       renderPreview();
       const preview = $('survey-preview');
       if (preview.getBoundingClientRect().top >= window.innerHeight) preview.scrollIntoView();
-    } catch {showError(browserFetch ? 'browserEngineError' : 'networkError');}
+    } catch {showError(browserFetch ? 'browserEngineError' : 'networkError', {}, false, errorTarget);}
     finally {state.inspecting=false;setBusy(false);}
   }
 
