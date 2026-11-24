@@ -61,6 +61,7 @@
     const privacy = $('run-privacy');
     if (privacy) privacy.textContent = t('hostPrivacy');
     $('hosted-tools').hidden = false;
+    document.querySelector('.intro').hidden = true;
     $('hosted-access').hidden = !backend;
     $('hosted-login').hidden = Boolean(accessKey);
     $('hosted-lock').hidden = !accessKey;
@@ -121,7 +122,7 @@
     button.disabled = true;
     hostStatus('demoLoading');
     try {
-      const response = await fetch('./demo/' + method + '/view.json');
+      const response = await fetch('./demo/' + method + '/view.json', {cache:'no-cache'});
       if (!response.ok) throw new Error('Demo assets unavailable');
       const {result, metadata} = await response.json();
       if (request !== currentRequest) return;
@@ -133,7 +134,10 @@
       state.resultNoteAuto = true;
       state.view = method === 'kriging' ? 'uncertainty' : 'bed';
       renderResults();
-      $('status-text').textContent = t('resultsReady');
+      setBusy(false);
+      const currentUrl = new URL(location.href);
+      currentUrl.searchParams.set('demo', method);
+      history.replaceState(null, '', currentUrl);
       hostStatus(backend ? 'hostDemoReady' : 'hostDemoOnly');
     } catch {
       if (request === currentRequest) hostStatus('hostDemoError');
@@ -1066,5 +1070,9 @@
     hostStatus(backend ? 'hostDemoReady' : 'hostDemoOnly');
   }
   translate();
-  if (hosting && new URLSearchParams(location.search).has('demo')) loadPublicDemo();
+  if (hosting) {
+    const demo = new URLSearchParams(location.search).get('demo');
+    if (demo === 'kriging') $('hosted-method').value = 'kriging';
+    if (demo !== null) loadPublicDemo();
+  }
 })();

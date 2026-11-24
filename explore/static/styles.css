@@ -31,7 +31,7 @@
 @media(max-width:620px){#profile-chart{height:320px}}
 
 .hosted-tools {display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:14px 26px;padding:19px 22px;margin:0 0 24px;background:#fff;border:1px solid #cddfd8;border-radius:16px}
-.hosted-tools h2 {font-size:16px;margin:0 0 5px}
+.hosted-tools h1 {font-size:23px;margin:0 0 5px;letter-spacing:-.025em}
 .hosted-tools p {margin:0;color:#506a73;font-size:13px;line-height:1.55}
 .hosted-demo-controls,.hosted-tools form {display:flex;align-items:center;gap:9px;flex-wrap:wrap}
 .hosted-tools label {font-size:13px;font-weight:650}
